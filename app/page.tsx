@@ -1,5 +1,5 @@
 export default function Home() {
   return (
-    <div>Hello world</div>
+    <div>Stand Strong 🫵</div>
   );
 }

@@ -36,5 +36,5 @@ export async function DELETE(request: NextRequest, {params}: {params : {id: stri
   await prisma.issue.delete({
     where: {id: issue.id}
   })
-  return NextResponse.json({});
+  return NextResponse.json({ message: 'Issue deleted successfully' }, {status: 204});
 }
