@@ -7,7 +7,7 @@ import { Issue, Status } from "@prisma/client";
 import { ArrowUpIcon } from "@radix-ui/react-icons";
 
 interface Props {
-  searchParams: { status?: string; orderBy?: string };
+  searchParams: { status: Status; orderBy: keyof Issue };
 }
 
 const IssuesPage = async ({ searchParams }: Props) => {
@@ -22,17 +22,12 @@ const IssuesPage = async ({ searchParams }: Props) => {
   ];
 
   const statuses = Object.values(Status);
-  const status = statuses.includes(searchParams.status as Status)
-    ? (searchParams.status as Status)
-    : undefined;
-
-  const orderBy = columns.some((col) => col.value === searchParams.orderBy)
-    ? (searchParams.orderBy as keyof Issue)
+  const status = statuses.includes(searchParams.status)
+    ? searchParams.status
     : undefined;
 
   const issues = await prisma.issue.findMany({
-    where: status ? { status } : {},
-    orderBy: orderBy ? { [orderBy]: "asc" } : undefined,
+    where: { status },
   });
 
   return (
@@ -42,7 +37,10 @@ const IssuesPage = async ({ searchParams }: Props) => {
         <Table.Header>
           <Table.Row>
             {columns.map((column) => (
-              <Table.ColumnHeaderCell key={column.value}>
+              <Table.ColumnHeaderCell
+                key={column.value}
+                className={column.className}
+              >
                 <NextLink
                   href={{
                     query: { ...searchParams, orderBy: column.value },
@@ -50,7 +48,7 @@ const IssuesPage = async ({ searchParams }: Props) => {
                 >
                   {column.label}
                 </NextLink>
-                {column.value === orderBy && (
+                {column.value === searchParams.orderBy && (
                   <ArrowUpIcon className="inline" />
                 )}
               </Table.ColumnHeaderCell>
@@ -70,7 +68,7 @@ const IssuesPage = async ({ searchParams }: Props) => {
                 <IssueStatusBadge status={issue.status} />
               </Table.Cell>
               <Table.Cell className="hidden md:table-cell">
-                {new Date(issue.createdAt).toDateString()}
+                {issue.createdAt.toDateString()}
               </Table.Cell>
             </Table.Row>
           ))}
