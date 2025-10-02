@@ -22,9 +22,12 @@ const IssuesPage = async ({ searchParams }: Props) => {
   ];
 
   const statuses = Object.values(Status);
-  const status = statuses.includes(searchParams.status)
-    ? searchParams.status
+  const resolveParams = await searchParams;
+  const status = statuses.includes(resolveParams.status)
+    ? resolveParams.status
     : undefined;
+  
+  console.log(searchParams);
 
   const orderBy = columns
     .map(column => column.value)
@@ -36,6 +39,11 @@ const IssuesPage = async ({ searchParams }: Props) => {
     where: { status },
     orderBy
   });
+
+  console.log(orderBy);
+  console.log(status);
+  console.log(statuses);
+  console.log(issues);
 
   return (
     <div>
