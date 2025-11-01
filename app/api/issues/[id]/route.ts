@@ -4,16 +4,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import authOptions from "@/app/auth/authOptions";
 
-export async function PATCH(request: NextRequest, {params}: {params : {id: string}}){
-  try{
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
     const session = await getServerSession(authOptions);
-
-    if(!session) return NextResponse.json({msg: "Session not found, please Login"}, {status: 401});
+    if (!session)
+      return NextResponse.json(
+        { msg: "Session not found, please login" },
+        { status: 401 }
+      );
 
     const body = await request.json();
     const validation = patchIssueSchema.safeParse(body);
-
-    if(!validation.success) return NextResponse.json(validation.error.format(), {status: 400});
+    if (!validation.success)
+      return NextResponse.json(validation.error.format(), { status: 400 });
 
     const { assignedToUserId, title, description } = body;
 
@@ -22,55 +28,54 @@ export async function PATCH(request: NextRequest, {params}: {params : {id: strin
         where: { id: assignedToUserId },
       });
       if (!user)
-        return NextResponse.json(
-          { error: "Invalid user." },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Invalid user." }, { status: 400 });
     }
 
-    const {id} = await params;
-    const issue = await prisma.issue.findUnique({
-      where: {id: parseInt(id)},
-    });
-
-    if(!issue) return NextResponse.json({error: 'Failed to Update issue'}, {status: 404});
-
-    const updateIssue = await prisma.issue.update({
-      where: {id: issue.id},
-      data:{
-        title,
-        description,
-        assignedToUserId
-      }
-    });
-
-    return NextResponse.json(updateIssue, {status: 201});
-
-  }catch(error){
-    return NextResponse.json(
-      { error: "Invalid Issue" },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const session = await getServerSession(authOptions);
-
-    if(!session) return NextResponse.json({msg: "Session not found, please Login"}, {status: 401});
-
-    const { id } = params;
+    const { id } = await context.params;
 
     const issue = await prisma.issue.findUnique({
       where: { id: parseInt(id) },
     });
 
     if (!issue)
-      return NextResponse.json({ error: "Failed to delete issue" }, { status: 404 });
+      return NextResponse.json({ error: "Issue not found" }, { status: 404 });
+
+    const updatedIssue = await prisma.issue.update({
+      where: { id: issue.id },
+      data: {
+        title,
+        description,
+        assignedToUserId,
+      },
+    });
+
+    return NextResponse.json(updatedIssue, { status: 200 });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: "Invalid Issue" }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session)
+      return NextResponse.json(
+        { msg: "Session not found, please login" },
+        { status: 401 }
+      );
+
+    const { id } = await context.params;
+
+    const issue = await prisma.issue.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!issue)
+      return NextResponse.json({ error: "Issue not found" }, { status: 404 });
 
     await prisma.issue.delete({
       where: { id: issue.id },
@@ -78,9 +83,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Invalid Issue" },
-      { status: 500 }
-    );
+    console.error(error);
+    return NextResponse.json({ error: "Invalid Issue" }, { status: 500 });
   }
 }
