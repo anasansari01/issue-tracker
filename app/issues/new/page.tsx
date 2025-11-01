@@ -9,8 +9,6 @@ const IssueForm = dynamic(
   }
 );
 
-const NewIssuePage = () => {
+export default function NewIssuePage() {
   return <IssueForm />;
-};
-
-export default NewIssuePage;
+}
